@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpNewsPAT1", "HttpNewsPAT1\HttpNewsPAT1.csproj", "{003A4B28-AC82-4337-A6AE-60D352CD3551}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{003A4B28-AC82-4337-A6AE-60D352CD3551}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{003A4B28-AC82-4337-A6AE-60D352CD3551}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{003A4B28-AC82-4337-A6AE-60D352CD3551}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{003A4B28-AC82-4337-A6AE-60D352CD3551}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B6BEF415-F7C1-41A7-BE3F-93692C873F49}
+	EndGlobalSection
+EndGlobal
