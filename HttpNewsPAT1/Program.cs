@@ -61,5 +61,27 @@ namespace HttpNewsPAT1
            
             Console.WriteLine(responseFromServer);
         }
+        public static string GetContent()
+        {
+            string content = null;
+            string url = "https://habr.com/ru/articles/";
+
+            Debug.WriteLine($"Запрашиваем: {url}");
+
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+
+            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            {
+                Debug.WriteLine($"Статус: {response.StatusCode}");
+
+                using (Stream stream = response.GetResponseStream())
+                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    content = reader.ReadToEnd();
+                }
+            }
+
+            return content;
+        }
     }
 }
