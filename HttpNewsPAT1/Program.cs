@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace HttpNewsPAT1
@@ -83,5 +84,47 @@ namespace HttpNewsPAT1
 
             return content;
         }
+        public static void ParsingHtml(string htmlCode)
+        {
+            var html = new HtmlDocument();
+            html.LoadHtml(htmlCode);
+
+            var document = html.DocumentNode;
+
+           
+            var articles = document.Descendants("article")
+                .Where(x => x.HasClass("tm-articles-list__item"));
+
+            foreach (var article in articles)
+            {
+                var titleLink = article.Descendants("a")
+                    .FirstOrDefault(x => x.HasClass("tm-title__link"));
+                string title = titleLink?.InnerText?.Trim() ?? "Без названия";
+
+                string url = titleLink?.GetAttributeValue("href", "") ?? "";
+                if (!string.IsNullOrEmpty(url) && !url.StartsWith("http"))
+                {
+                    url = "https://habr.com" + url;
+                }
+
+           
+                var authorLink = article.Descendants("a")
+                    .FirstOrDefault(x => x.HasClass("tm-user-info__username"));
+                string author = authorLink?.InnerText?.Trim() ?? "Неизвестно";
+
+        
+                var previewDiv = article.Descendants("div")
+                    .FirstOrDefault(x => x.HasClass("article-formatted-body"));
+                string preview = previewDiv?.InnerText?.Trim() ?? "";
+                if (preview.Length > 150) preview = preview.Substring(0, 150) + "...";
+
+                Console.WriteLine($"{title}");
+                Console.WriteLine($"Автор: {author}");
+                Console.WriteLine($"{preview}");
+                Console.WriteLine($"{url}");
+                Console.WriteLine();
+            }
+        }
+     
     }
 }
