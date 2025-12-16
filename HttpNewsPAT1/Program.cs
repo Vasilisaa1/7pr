@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using HtmlAgilityPack;
 
@@ -13,92 +13,145 @@ namespace HttpNewsPAT1
     {
         static void Main(string[] args)
         {
-            Cookie token = SingIn("user", "user");
+            // Авторизация, получаем контейнер с куками
+            CookieContainer cookies = SingIn("user", "user");
 
-            string Content = GetContent(token);
-            ParsingHtml(Content);
+            // Получаем страницу с новостями
+            string content = GetContent(cookies);
 
-            Console.Read();
+            // Парсим HTML
+            ParsingHtml(content);
 
+            // Добавляем новость (для оценки «Хорошо»)
+            AddNews("Тестовая новость", "Описание тестовой новости", cookies);
+
+            Console.WriteLine("Готово. Нажмите любую клавишу...");
+            Console.ReadKey();
         }
+
         public static void ParsingHtml(string htmlCode)
         {
-            var Html = new HtmlDocument();
-            Html.LoadHtml(htmlCode);
+            var html = new HtmlDocument();
+            html.LoadHtml(htmlCode);
 
-            var Document = Html.DocumentNode;
-            IEnumerable<HtmlNode> DivNews = Document.Descendants(0).Where(x => x.HasClass("news"));
+            var document = html.DocumentNode;
+            var divNews = document.Descendants()
+                                  .Where(x => x.HasClass("news"));
 
             bool firstNews = true;
 
-            foreach (var DivNew in DivNews)
+            foreach (var divNew in divNews)
             {
-
                 if (!firstNews)
                 {
-                    Console.WriteLine("\n");
+                    Console.WriteLine();
+                    Console.WriteLine();
                 }
                 firstNews = false;
 
-                var src = DivNew.ChildNodes[1].GetAttributeValue("src", "none");
-                var name = DivNew.ChildNodes[3].InnerHtml;
-                var description = DivNew.ChildNodes[5].InnerHtml;
+                var src = divNew.ChildNodes[1].GetAttributeValue("src", "none");
+                var name = divNew.ChildNodes[3].InnerHtml;
+                var description = divNew.ChildNodes[5].InnerHtml;
 
-                Console.WriteLine($"{name} \nИзображение: {src} \nОписание: {description}");
+                Console.WriteLine("{0}\nИзображение: {1}\nОписание: {2}",
+                    name, src, description);
             }
         }
-        public static Cookie SingIn(string login, string password)
+
+        // -------- HttpClient + CookieContainer --------
+
+        public static CookieContainer SingIn(string login, string password)
         {
-            Cookie token = null;
+            var cookies = new CookieContainer();
 
-            string Url = "http://news.permaviat.ru/ajax/login.php";
-
-            Debug.WriteLine($"Выполняем запрос: {Url}");
-
-            HttpWebRequest Request = (HttpWebRequest)WebRequest.Create(Url);
-            Request.Method = "POST";
-            Request.ContentType = "application/x-www-form-urlencoded";
-            Request.CookieContainer = new CookieContainer();
-            byte[] Data = Encoding.ASCII.GetBytes($"login={login}&password={password}");
-            Request.ContentLength = Data.Length;
-
-            using (Stream stream = Request.GetRequestStream())
+            var handler = new HttpClientHandler
             {
-                stream.Write(Data, 0, Data.Length);
+                CookieContainer = cookies,
+                UseCookies = true,
+                AllowAutoRedirect = true
+            };
+
+            using (var client = new HttpClient(handler))
+            {
+                client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0");
+
+                var form = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("login", login),
+                    new KeyValuePair<string, string>("password", password)
+                });
+
+                Debug.WriteLine("Выполняем запрос авторизации: http://news.permaviat.ru/ajax/login.php");
+
+                HttpResponseMessage response =
+                    client.PostAsync("http://news.permaviat.ru/ajax/login.php", form).Result;
+
+                Debug.WriteLine("Статус выполнения: " + response.StatusCode);
+
+                string respText = response.Content.ReadAsStringAsync().Result;
+                Console.WriteLine("Ответ сервера при авторизации:");
+                Console.WriteLine(respText);
             }
 
-            using (HttpWebResponse Response = (HttpWebResponse)Request.GetResponse())
-            {
-                Debug.WriteLine($"Статус выполнения: {Response.StatusCode}");
-                string ResponseFromServer = new StreamReader(Response.GetResponseStream()).ReadToEnd();
-                Console.WriteLine(ResponseFromServer);
-
-                token = Response.Cookies["token"];
-            }
-
-            return token;
+            // cookies теперь содержит куки с токеном
+            return cookies;
         }
-    
 
-        public static string GetContent(Cookie Token)
+        public static string GetContent(CookieContainer cookies)
         {
-            //string Content = null;
+            var handler = new HttpClientHandler
+            {
+                CookieContainer = cookies,
+                UseCookies = true,
+                AllowAutoRedirect = true
+            };
 
-            string Url = "http://news.permaviat.ru/main";
-            Debug.WriteLine($"Выполняем запрос: {Url}");
+            using (var client = new HttpClient(handler))
+            {
+                Debug.WriteLine("Выполняем запрос: http://news.permaviat.ru/main");
 
-            HttpWebRequest Request = (HttpWebRequest)WebRequest.Create(Url);
-            Request.CookieContainer = new CookieContainer();
-            Request.CookieContainer.Add(Token);
+                HttpResponseMessage response =
+                    client.GetAsync("http://news.permaviat.ru/main").Result;
 
-            HttpWebResponse Response = (HttpWebResponse)Request.GetResponse();
-         
-                Debug.WriteLine($"Статус выполнения: {Response.StatusCode}");
+                Debug.WriteLine("Статус выполнения: " + response.StatusCode);
 
-                string Content = new StreamReader(Response.GetResponseStream()).ReadToEnd();
-            
-           Console.WriteLine(Content);
-            return Content;
+                string content = response.Content.ReadAsStringAsync().Result;
+
+                // При желании можно закомментировать, чтобы не засорять консоль
+                // Console.WriteLine(content);
+
+                return content;
+            }
+        }
+
+        public static void AddNews(string title, string description, CookieContainer cookies)
+        {
+            var handler = new HttpClientHandler
+            {
+                CookieContainer = cookies,
+                UseCookies = true,
+                AllowAutoRedirect = true
+            };
+
+            using (var client = new HttpClient(handler))
+            {
+                var form = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("title", title),
+                    new KeyValuePair<string, string>("description", description)
+                });
+
+                Debug.WriteLine("Добавляем новую запись: http://news.permaviat.ru/add");
+
+                HttpResponseMessage response =
+                    client.PostAsync("http://news.permaviat.ru/add", form).Result;
+
+                Debug.WriteLine("Статус добавления: " + response.StatusCode);
+
+                string respText = response.Content.ReadAsStringAsync().Result;
+                Console.WriteLine("Ответ сервера при добавлении:");
+                Console.WriteLine(respText);
+            }
         }
     }
 }
