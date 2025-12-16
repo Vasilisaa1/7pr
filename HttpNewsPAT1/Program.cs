@@ -95,9 +95,10 @@ namespace HttpNewsPAT1
          
                 Debug.WriteLine($"Статус выполнения: {Response.StatusCode}");
 
-                string responseFromServer = new StreamReader(Response.GetResponseStream()).ReadToEnd();
+                string Content = new StreamReader(Response.GetResponseStream()).ReadToEnd();
             
-           Console.WriteLine (responseFromServer);  
+           Console.WriteLine(Content);
+            return Content;
         }
     }
 }
