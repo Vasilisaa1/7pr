@@ -20,11 +20,12 @@ namespace HttpNewsPAT1
             string content = GetContent(cookies);
 
             // Парсим HTML
+            
             ParsingHtml(content);
 
             // Добавляем новость (для оценки «Хорошо»)
-            AddNews("Тестовая новость", "Описание тестовой новости", cookies);
-
+         //   AddNews( "https://avatars.mds.yandex.net/i?id=3a1535b015537a9a1dd88e54c2a7ad8a_sr-4960885-images-thumbs&n=13","Тестовая новость", "Описание тестовой новости", cookies);
+            AddNewsFromConsole(cookies); // Для синхронной версии
             Console.WriteLine("Готово. Нажмите любую клавишу...");
             Console.ReadKey();
         }
@@ -124,7 +125,7 @@ namespace HttpNewsPAT1
             }
         }
 
-        public static void AddNews(string title, string description, CookieContainer cookies)
+        public static void AddNews(string src, string name, string description, CookieContainer cookies)
         {
             var handler = new HttpClientHandler
             {
@@ -135,16 +136,18 @@ namespace HttpNewsPAT1
 
             using (var client = new HttpClient(handler))
             {
+                string url = "http://news.permaviat.ru/ajax/add";
                 var form = new FormUrlEncodedContent(new[]
                 {
-                    new KeyValuePair<string, string>("title", title),
+                    new KeyValuePair<string, string>("src", src),
+                    new KeyValuePair<string, string>("name", name),
                     new KeyValuePair<string, string>("description", description)
                 });
 
-                Debug.WriteLine("Добавляем новую запись: http://news.permaviat.ru/add");
+                Debug.WriteLine("Добавляем новую запись: " + url);
 
                 HttpResponseMessage response =
-                    client.PostAsync("http://news.permaviat.ru/add", form).Result;
+                    client.PostAsync(url, form).Result;
 
                 Debug.WriteLine("Статус добавления: " + response.StatusCode);
 
@@ -152,6 +155,41 @@ namespace HttpNewsPAT1
                 Console.WriteLine("Ответ сервера при добавлении:");
                 Console.WriteLine(respText);
             }
+        }
+        public static void AddNewsFromConsole(CookieContainer cookies)
+        {
+            
+         //   Console.WriteLine("=== ДОБАВЛЕНИЕ НОВОСТИ ===\n");
+
+            Console.Write("Введите URL изображения: ");
+            string src = Console.ReadLine();
+
+            Console.Write("Введите заголовок новости: ");
+            string name = Console.ReadLine();
+
+            Console.Write("Введите описание новости: ");
+            string description = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(src) || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(description))
+            {
+                Console.WriteLine("\nОшибка: Все поля должны быть заполнены!");
+                return;
+            }
+
+         //   Console.WriteLine("\nДобавляем новость...");
+
+            try
+            {
+                AddNews(src, name, description, cookies);
+                Console.WriteLine("\nНовость успешно добавлена!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"\nОшибка: {ex.Message}");
+            }
+
+            Console.WriteLine("\nНажмите любую клавишу...");
+            Console.ReadKey();
         }
     }
 }
