@@ -11,23 +11,18 @@ namespace HttpNewsPAT1
 {
     public class Program
     {
+
         static void Main(string[] args)
         {
-            // Авторизация, получаем контейнер с куками
+
+            SetupDebugOutputToFile();
             CookieContainer cookies = SingIn("user", "user");
-
-            // Получаем страницу с новостями
-            string content = GetContent(cookies);
-
-            // Парсим HTML
-            
+            string content = GetContent(cookies);            
             ParsingHtml(content);
-
-            // Добавляем новость (для оценки «Хорошо»)
-         //   AddNews( "https://avatars.mds.yandex.net/i?id=3a1535b015537a9a1dd88e54c2a7ad8a_sr-4960885-images-thumbs&n=13","Тестовая новость", "Описание тестовой новости", cookies);
-            AddNewsFromConsole(cookies); // Для синхронной версии
+            AddNewsFromConsole(cookies); 
             Console.WriteLine("Готово. Нажмите любую клавишу...");
             Console.ReadKey();
+
         }
 
         public static void ParsingHtml(string htmlCode)
@@ -59,7 +54,15 @@ namespace HttpNewsPAT1
             }
         }
 
-        // -------- HttpClient + CookieContainer --------
+        private static void SetupDebugOutputToFile()
+        {
+            string logFilePath = "debug_log.txt";
+            TextWriterTraceListener traceListener = new TextWriterTraceListener(logFilePath);
+            Debug.Listeners.Clear();
+            Debug.Listeners.Add(traceListener);
+            Debug.AutoFlush = true;
+            Debug.WriteLine($"=== Начало сеанса: {DateTime.Now} ===");
+        }
 
         public static CookieContainer SingIn(string login, string password)
         {
@@ -94,7 +97,7 @@ namespace HttpNewsPAT1
                 Console.WriteLine(respText);
             }
 
-            // cookies теперь содержит куки с токеном
+      
             return cookies;
         }
 
@@ -118,8 +121,6 @@ namespace HttpNewsPAT1
 
                 string content = response.Content.ReadAsStringAsync().Result;
 
-                // При желании можно закомментировать, чтобы не засорять консоль
-                // Console.WriteLine(content);
 
                 return content;
             }
@@ -159,7 +160,7 @@ namespace HttpNewsPAT1
         public static void AddNewsFromConsole(CookieContainer cookies)
         {
             
-         //   Console.WriteLine("=== ДОБАВЛЕНИЕ НОВОСТИ ===\n");
+
 
             Console.Write("Введите URL изображения: ");
             string src = Console.ReadLine();
@@ -176,7 +177,7 @@ namespace HttpNewsPAT1
                 return;
             }
 
-         //   Console.WriteLine("\nДобавляем новость...");
+       
 
             try
             {
@@ -191,5 +192,7 @@ namespace HttpNewsPAT1
             Console.WriteLine("\nНажмите любую клавишу...");
             Console.ReadKey();
         }
+
     }
+
 }
